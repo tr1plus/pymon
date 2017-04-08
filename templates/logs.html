@@ -1,0 +1,92 @@
+$def with (logs)
+
+<script>
+	var d = document.getElementById("logs");
+	d.className += " active";
+</script>
+
+<h3>Pymon Logs</h3>
+<div class="row">
+	<div class="col-lg-12">
+		<div class="panel panel-primary">
+			<div class="panel-heading">
+				<h3 class="panel-title"><i class="fa fa-bar-chart-o"></i> Nodes</h3>
+			</div>
+			<div class="panel-body">
+				<div class="dataTable_wrapper table-responsive">
+						<table class="table table-striped table-bordered table-hover" cellspacing="0" width="100%" id="logTable">
+							<thead>
+								<tr>
+									<th>Node Id</th>
+									<th>Timestamp</th>
+									<th>Log Type</th>
+									<th>Module</th>
+									<th>Entry</th>
+								</tr>
+							</thead>
+							<tbody id="logTableBody">
+								<!-- Generate body -->
+							</tbody>
+							<tfoot>
+								<tr>
+									<th></th>
+									<th></th>
+									<th></th>
+									<th></th>
+									<th></th>
+								</tr>
+							</tfoot>
+						</table>
+					</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+	$$(document).ready(function() {
+		var logs = $:logs;
+		loops = logs.length;
+		
+		var out = "";
+		for(i = 0; i < loops; i++){
+			out += "<tr><td>" +
+			logs[i].nodeId +
+			"</td><td>" +
+			logs[i].timestamp +
+			"</td><td>" +
+			logs[i].logType +
+			"</td><td>" +
+			logs[i].module +
+			"</td><td>" +
+			logs[i].message +
+			"</td></tr>";
+		}
+		document.getElementById("logTableBody").innerHTML = out;
+		
+        $$('#logTable').DataTable({
+                responsive: true,
+				order: [[ 1, "desc" ]],
+				initComplete: function () {
+					this.api().columns().every( function () {
+						var column = this;
+						var select = $$('<select><option value=""></option></select>')
+							.appendTo( $$(column.footer()).empty() )
+							.on( 'change', function () {
+								var val = $$.fn.dataTable.util.escapeRegex(
+									$$(this).val()
+								);
+		 
+								column
+									.search( val ? '^'+val+'$$' : '', true, false )
+									.draw();
+							} );
+		 
+						column.data().unique().sort().each( function ( d, j ) {
+							select.append( '<option value="'+d+'">'+d+'</option>' )
+						} );
+					} );
+				}
+        });
+    });
+</script>

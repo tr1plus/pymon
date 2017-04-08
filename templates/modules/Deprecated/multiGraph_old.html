@@ -1,0 +1,178 @@
+$def with (cpuUsage, nodes)
+
+<div id="graphRow" class="row">
+	
+</div>
+
+<script type="text/javascript">
+	var nodes = $:nodes;
+	var graphRow = document.getElementById("graphRow");
+	$$.each(nodes, function(i, node) {
+		graphRow.insertAdjacentHTML('beforeend', '<div class="col-lg-3"><div class="panel panel-primary"><div class="panel-heading"><h3 class="panel-title"><i class="fa fa-bar-chart-o"></i> CPU Usage for Node ' + node.hostName + '</h3></div><div class="panel-body"><canvas id="CPU_Usage' + node.hostName + '"></canvas></div></div></div>');
+	});
+	
+	var mapping= []
+	var iteration = 0
+	var timestamps;
+	var datasets = [];
+	var thisNode = -1;
+	
+	$$.each($:cpuUsage, function(k,v) {
+		if(nodes.length == 1)
+		{
+			thisNode = k;
+		}
+		mapping[k] = iteration;
+		var lbl;
+		var color;
+		var colorLine;
+		$$.each(nodes, function(i, node) {
+			if(node.nodeId == k)
+			{
+				lbl = node.hostName;
+				color = node.color;
+				colorLine = color;
+			}
+		});
+		timestamps = $$.map(v, function (el) {
+		  return el.time;
+		});
+		var values = $$.map(v, function (el) {
+		  return el.value;
+		});
+		colorLine.replace(/[^,]+(?=\))/, '1')
+		var dataset = {
+				label: lbl,
+				data: values,
+				backgroundColor: [
+					color
+				],
+				borderColor: [
+					colorLine
+				],
+				borderWidth: 2,
+				borderCapStyle: 'butt',
+				borderDash: [],
+				borderDashOffset: 0.0,
+				borderJoinStyle: 'miter',
+				pointBorderColor: colorLine,
+				pointBackgroundColor: "#fff",
+				pointBorderWidth: 1,
+				pointHoverRadius: 5,
+				pointHoverBackgroundColor: colorLine,
+				pointHoverBorderColor: colorLine,
+				pointHoverBorderWidth: 2,
+				pointRadius: 1,
+				pointHitRadius: 10
+			};
+		datasets.push(dataset);
+		iteration++;
+	});
+	var ctx = document.getElementById("CPU_Usage");
+	var myChart = new Chart(ctx, {
+		type: 'line',
+		data: {
+			labels: timestamps,
+			datasets: datasets
+		},
+		options: {
+			scales: {
+				xAxes: [{
+					type: 'time',
+					time: {
+						displayFormats: {
+							quarter: 'H:mm:ss'
+						}
+					}
+				}],
+				yAxes: [{
+					ticks: {
+						beginAtZero:true
+					}
+				}],
+				tooltips:[{
+					enabled: true
+				}]
+			}
+		}
+	});
+	
+	setInterval(function(){
+		$$.ajax({
+			dataType: "json",
+			url: "/CPU_Usage",
+			success: function (json_data) {
+				$$.each(json_data, function(i, nodeEntry) {
+					nodeEntry = nodeEntry[0];
+					//console.log(nodeEntry[0].nodeId + " - " + nodeEntry[0].timestamp + " - " + myChart.data.labels)
+					//console.log($$.inArray(nodeEntry[0].timestamp, myChart.data.labels) != -1)
+					if($$.inArray(nodeEntry.timestamp, myChart.data.labels) == -1)
+					{
+						myChart.data.labels.shift();
+						myChart.data.labels.push(nodeEntry.timestamp);
+						
+						$$.each(mapping, function(k,v) {
+							if(k == nodeEntry.nodeId)
+							{
+								myChart.data.datasets[v].data.shift();
+								myChart.data.datasets[v].data.push(nodeEntry.value);
+								console.log("adding for node " + nodeEntry.nodeId)
+							}
+						});
+						myChart.update();
+					}
+				});
+				/*var canUpdate = true;
+				$$.each(json_data, function(i, nodeEntry) {
+					//console.log(nodeEntry[0].nodeId + " - " + nodeEntry[0].timestamp + " - " + myChart.data.labels)
+					//console.log($$.inArray(nodeEntry[0].timestamp, myChart.data.labels) != -1)
+					if($$.inArray(nodeEntry[0].timestamp, myChart.data.labels) != -1)
+					{
+						canUpdate = false;
+					}
+				});
+				if(canUpdate)
+				{
+					$$.each(json_data, function(i, nodeEntry) {
+						nodeEntry = nodeEntry[0];
+						if(jQuery.isEmptyObject(nodeEntry) == false)
+						{
+							if(nodes.length == 1)
+							{
+								if(nodeEntry.nodeId == thisNode)
+								{
+									//if(nodeEntry.timestamp != myChart.data.labels[myChart.data.labels.length - 1])
+									//{
+										myChart.data.labels.shift();
+										myChart.data.labels.push(nodeEntry.timestamp);
+										myChart.data.datasets[0].data.shift();
+										myChart.data.datasets[0].data.push(nodeEntry.value);
+									//}
+									myChart.update();
+								}
+							} else
+							{
+								//if(nodeEntry.timestamp != myChart.data.labels[myChart.data.labels.length - 1])
+								//{
+									//if(myChart.data.labels[myChart.data.labels.length - 1] != json_data[0].timestamp)
+									myChart.data.labels.shift();
+									myChart.data.labels.push(nodeEntry.timestamp);
+									
+									$$.each(mapping, function(k,v) {
+										if(k == nodeEntry.nodeId)
+										{
+											myChart.data.datasets[v].data.shift();
+											myChart.data.datasets[v].data.push(nodeEntry.value);
+											console.log("adding for node " + nodeEntry.nodeId)
+										}
+									});
+									myChart.update();
+								//}
+							}
+						}
+					});
+				}*/
+			}
+		});
+	}, 2500);
+</script>

@@ -1,0 +1,14 @@
+$def with (nodes, amountOfNodes, templateList)
+
+<script>
+	var d = document.getElementById("index");
+	d.className += " active";
+</script>
+
+<div class="row">
+	<div class="col-lg-12">
+		<h1>PyMon <small> monitoring overview</small></h1>
+	</div>
+</div>
+$for template in templateList
+		$:template

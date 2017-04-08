@@ -1,0 +1,73 @@
+$def with (cpuUsage, nodes)
+
+<div id="cpu_usage_graphs">
+
+</div>
+
+<!DOCTYPE html>
+<html>
+  <head>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+	<script>
+		google.charts.load('current', {
+		  callback: function () {
+			var nodes = $:nodes;
+			var graphRow = document.getElementById("cpu_usage_graphs");
+
+			function drawCharts() {
+			  $$.each(nodes, function(i, node) {
+				if (document.getElementById('CPU_Usage' + node.nodeId) === null) {
+				  graphRow.insertAdjacentHTML('beforeend', '<div class="col-lg-6"><div class="panel panel-primary"><div class="panel-heading"><h3 class="panel-title"><i class="fa fa-bar-chart-o"></i> CPU Usage for Node ' + node.hostName + '</h3></div><div id="CPU_Usage' + node.nodeId + '" class="panel-body"></div></div></div>');
+				}
+
+				$$.ajax({
+				  url: 'http://192.168.1.100:5051/CPU_Usage?node=' + node.nodeId,
+				  type: 'GET',
+				  async: true,
+				  dataType: 'json',
+				}).done(function (results) {
+				  var data = new google.visualization.DataTable();
+
+				  data.addColumn('datetime', 'Time');
+				  data.addColumn('number', 'cpu usage');
+
+				  $$.each(results[0], function (i, row) {
+					data.addRow([
+					  (new Date(row.timestamp)),
+					  parseFloat(row.value),
+					]);
+				  });
+
+				  var chart = new google.visualization.LineChart($$('#CPU_Usage' + node.nodeId).get(0));
+				  chart.draw(data, {
+					legend:'left',
+					vAxis: {
+						viewWindow: {
+							min: 0,
+							max: 100
+						}
+					},
+					series: {
+						0: { color: node.color }
+					}
+				  });
+				}).fail(function()	{
+				  console.log("Sorry. Server unavailable. ");
+				});
+			  });
+			}
+
+			drawCharts();
+			setInterval(drawCharts, 10000);
+		  },
+		  packages: ['corechart']
+		});
+	</script>
+
+  </head>
+  <body>
+	<div id="chart" style="width: 100%;"></div>
+  </body>
+</html>

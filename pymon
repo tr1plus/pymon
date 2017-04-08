@@ -1,0 +1,25 @@
+#!/bin/bash
+
+if [[ "$1" == "start" ]]
+then
+	echo "Starting Pymon and Pymon Dashboard"
+	tmux new -d -s pymon 'python /home/pi/pymon/nodeChecker.py'
+	sleep 2
+	tmux new -d -s pymonWeb 'python /home/pi/pymon/dashboard.py 5051'
+elif [[ "$1" == "monitor" ]]
+then
+	echo "Starting Pymon"
+	tmux new -d -s pymon 'python /home/pi/pymon/nodeChecker.py'
+elif [[ "$1" == "dashboard" ]]
+then
+	echo "Starting Pymon Dashboard"
+	tmux new -d -s pymonWeb 'python /home/pi/pymon/dashboard.py 5051'
+elif [[ "$1" == "exit" ]]
+then
+	echo "Stopping all open sessions"
+	tmux kill-session -t pymon
+	sleep 2
+	tmux kill-session -t pymonWeb
+else
+	echo "Use start, monitor or dashboard"
+fi

@@ -1,0 +1,12 @@
+$def with (templatesList)
+
+<script>
+	var d = document.getElementById("nodes");
+	d.className += " active";
+</script>
+
+	$for template in templatesList
+		$:template
+
+
+<h3>Hello, nodes</h3>
